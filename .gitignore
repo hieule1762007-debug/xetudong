@@ -1,0 +1,24 @@
+# Môi trường PlatformIO (ESP32)
+.pio/
+.vscode/
+*.bin
+*.elf
+
+# Môi trường Python (AI/Backend)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# File âm thanh sinh ra trong lúc chạy AI
+ai_voice.mp3
+music.mp3
+*.wav
+*.mp3
+
+# File rác của hệ điều hành
+.DS_Store
+Thumbs.db
+*.exe
+ffmpeg.exe
+ffprobe.exe
