@@ -1,12 +1,23 @@
-import serial
 import json
-import time
 from openai import OpenAI
 
 
 from Tools_schema import tools_schema
 from Tools import play_music, get_weather, find_shortest_path
-from map import BACHKHOA_GRAPH, WAYPOINTS
+from map import BACHKHOA_GRAPH
+
+TU_KHOA_TOOL = [
+    "nhạc",
+    "bài hát",
+    "mở bài",
+    "thời tiết",
+    "mưa",
+    "nắng",
+    "đường",
+    "đi tới",
+    "đi đến",
+    "chỉ đường",
+]
 
 client = OpenAI(base_url="http://localhost:11434/v1", api_key="local-run")
 MODEL_NAME = "qwen2.5:7b"  # Đảm bảo bạn đã chạy lệnh 'ollama run qwen2.5:1.5b'
@@ -15,12 +26,13 @@ chat_history = [
     {
         "role": "system",
         "content": (
-            "Không thêm ký hiệu và không thêm nội dung vào câu nói của tôi để nguyên nó như vậy"
-            "Người dùng hỏi bằng ngôn ngữ nào bạn phải trả lời bằng ngôn ngữ đó,Không được trả lời bằng ngôn ngữ khác"
-            "Bạn là trợ lý điều khiển hệ thống thông minh. BẠN PHẢI SỬ DỤNG CÁC CÔNG CỤ (TOOLS) ĐƯỢC CUNG CẤP để thực hiện yêu cầu của người dùng (chỉ đường, mở nhạc, thời tiết). "
-            "Tuyệt đối không giải thích, không xin lỗi, không trả lời bằng văn bản khi có thể dùng công cụ. "
-            "Nếu người dùng hỏi thời tiết mà không nói rõ ở đâu, mặc định là Đà Nẵng."
-            "Bạn có thể giao tiếp bình thường nếu người dùng chỉ muốn giao tiếp bình thường"
+            "Bạn là trợ lý giọng nói thông minh có nhiệm vụ điều khiển xe tự động chở người nên bạn cần  gọi tool khi người dùng cần "
+            "QUY TẮC BẮT BUỘC VỀ CÔNG CỤ (TOOLS):"
+            "1. LUÔN LUÔN ưu tiên sử dụng công cụ (tool/function) nếu câu nói của người dùng liên quan đến: phát nhạc, mở bài hát, xem giờ, thời tiết,tìm đường đi,đường đi đến,đường đi."
+            "2. KHÔNG BAO GIỜ tự bịa ra thông tin hoặc trả lời rằng Tôi không thể mở nhạc khi đã có công cụ `play_music`."
+            "3. Khi cần dùng công cụ, CHỈ trả về định dạng gọi hàm (tool_calls), KHÔNG giải thích dài dòng. "
+            "4. Chỉ trò chuyện bình thường khi yêu cầu của người dùng hoàn toàn không khớp với bất kỳ công cụ nào. "
+            "5 . Nếu trò chuyện thì chỉ trả về câu nói bình thường không được gửi bất kỳ đường link hay ngôn ngữ lạ trong đoạn hội thoại bình thường "
         ),
     }
 ]
@@ -28,6 +40,7 @@ chat_history = [
 
 def handle_data(user_input):
     global chat_history
+    can_dung_tool = any(kw in user_input.lower() for kw in TU_KHOA_TOOL)
     chat_history.append({"role": "user", "content": user_input})
     response = client.chat.completions.create(
         model=MODEL_NAME,

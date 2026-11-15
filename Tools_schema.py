@@ -3,7 +3,7 @@ tools_schema = [
         "type": "function",
         "function": {
             "name": "play_music",
-            "description": "BẮT BUỘC gọi hàm này ngay lập tức khi người dùng nhắc đến tên bài hát hoặc yêu cầu mở nhạc. Tuyệt đối không phản hồi bằng văn bản.",
+            "description": "Phát nhạc khi người dùng yêu cầu mở một bài hát.",
             "parameters": {
                 "type": "object",
                 "properties": {"song_name": {"type": "string"}},
@@ -15,7 +15,7 @@ tools_schema = [
         "type": "function",
         "function": {
             "name": "get_weather",
-            "description": "kích hoạt ngay hàm này khi nói về thời tiết",
+            "description": "Xem dự báo thời tiết tại một địa điểm.",
             "parameters": {
                 "type": "object",
                 "properties": {"location": {"type": "string"}},
@@ -27,7 +27,7 @@ tools_schema = [
         "type": "function",
         "function": {
             "name": "find_shortest_path",
-            "description": "tìm đường đi,đi tới liên quan đến đường đi là gọi hàm này ngày lập tực ko được tự trả lời",
+            "description": "Tìm đường đi ngắn nhất từ điểm xuất phát đến điểm đích.",
             "parameters": {
                 "type": "object",
                 "properties": {

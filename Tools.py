@@ -2,7 +2,28 @@ import yt_dlp
 import requests
 import heapq
 import os
+import unicodedata
+import re
 from ip_adress import ip
+
+
+def safe_name(song_name):
+    name = re.sub(r"[^\w]", "", song_name.lower().replace("đ", "d"))
+    name = (
+        unicodedata.normalize("NFKD", name.lower())
+        .encode("ascii", "ignore")
+        .decode("utf-8")
+    )
+    return name
+
+
+def check_file(song_namefile):
+    if song_namefile + ".mp3" in os.listdir("audio"):
+        print("Bài này tải rồi, phát luôn!")
+        return True
+    else:
+        print("Chưa có, bắt đầu tải từ YouTube...")
+        return False
 
 
 def play_music(song_name):
@@ -14,7 +35,7 @@ def play_music(song_name):
         song_name = "nhạc trẻ lofi"
 
     print(f"\n[Nhạc] Đang tải bài hát: {song_name}...")
-
+    Safe_name = safe_name(song_name)
     ydl_opts = {
         "format": "bestaudio/best",
         "ffmpeg_location": "./",
@@ -25,33 +46,32 @@ def play_music(song_name):
                 "preferredquality": "128",
             }
         ],
-        "outtmpl": "music",
+        "outtmpl": f"audio/{Safe_name}",
         "noplaylist": True,
         "quiet": True,
         "default_search": "ytsearch1",
         "extractor_args": {
-            "youtube": {"player_client": ["android", "web"]}
+            "youtube": {"player_client": ["android", "web"]},
+            "player_skip": [
+                "webpage"
+            ],  # Không cần tải trang HTML, hỏi thẳng API cho lẹ
+            "skip": [
+                "dash",
+                "hls",
+            ],  # Bỏ qua các luồng chia nhỏ, lấy thẳng file âm thanh
         },  # Dùng client Android/Web để né hoàn toàn lỗi JS của YouTube
     }
-
-    # Xóa file nhạc cũ đi để tránh lỗi kẹt file
-    if os.path.exists("music.mp3"):
+    print("qua safe name")
+    if not check_file(Safe_name):
         try:
-            os.remove("music.mp3")
-        except:
-            pass
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(song_name, download=True)
+                title = info["entries"][0].get("title", song_name)
+        except Exception as e:
+            return f"Xin lỗi, tôi gặp trục trặc khi tải bài hát này: {e}"
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(song_name, download=True)
-            title = info["entries"][0].get("title", song_name)
-
-            # Link trạm phát nội bộ cổng 8000 mạng LAN
-            link_noi_bo = f"http://{ip}:8000/music.mp3"
-            return f"Đang phát bài hát {title}||{link_noi_bo}"
-
-    except Exception as e:
-        return f"Xin lỗi, tôi gặp trục trặc khi tải bài hát này: {e}"
+    link_noi_bo = f"http://{ip}:8000/audio/{Safe_name}.mp3"
+    return f"Đang phát bài hát {song_name}||{link_noi_bo}"
 
 
 def get_weather(location: str = "Đà Nẵng") -> str:
